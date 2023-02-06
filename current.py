@@ -1,9 +1,9 @@
-import sqlite3
 from time import time
 
 from PyQt5.QtCore import QThread, QTimer
 
-from const import APPID, DATABASE, INFO, WTHR
+from sqlbase import conn
+from const import APPID, INFO, WTHR
 from entryes import *
 from get_json import get_json
 from lat_lon import lat_lon
@@ -14,14 +14,14 @@ from yandex_info import yandex_info
 from history_data import history_data
 
 
-def current():
+def current(update=False):
     try:
-        lat, lon = lat_lon()
+        lat, lon = lat_lon(update)
         link = f'https://api.openweathermap.org/data/2.5/weather?lat={lat}&lon={lon}&units=metric&appid={APPID}'
         w_info = get_json(link)
         return weather_info(w_info), city_info(w_info)
     except:
-        with sqlite3.connect(DATABASE) as conn:
+        with conn:
             cur = conn.cursor()
             cur.execute(f'SELECT * FROM weather WHERE dt >= {int(time()) - 10800} ORDER BY dt LIMIT 1;')
             _weather = weather(*cur.fetchone())
@@ -36,9 +36,9 @@ def hystory(lat: float, lon: float):
     return tuple(weather_info(weather) for weather in h_info['list'])
     
 
-def weather_values():
-    w_i, c_i = current()
-    with sqlite3.connect(DATABASE) as conn:
+def weather_values(update=False):
+    w_i, c_i = current(update)
+    with conn:
         cur = conn.cursor()
         cur.execute(f'SELECT * FROM city WHERE id = {c_i.id};')
         for_city = cur.fetchone()
@@ -46,7 +46,7 @@ def weather_values():
 
 
 def update_city(info: city_info):
-    with sqlite3.connect(DATABASE) as conn:
+    with conn:
         cur = conn.cursor()
         cur.execute('DROP TABLE IF EXISTS info;')
         cur.execute(INFO)
@@ -61,16 +61,16 @@ class Current(QThread):
         self.mainwindow = mainwindow
         self.timer=QTimer()
         self.timer.timeout.connect(self.set_values)
-        self.set_values(True)
+        self.set_values(True, True)
 
     def run(self):
         self.timer.start(60000)
     
-    def set_values(self, history=False):
+    def set_values(self, history=False, update=False):
         ui = self.mainwindow
-        w_i, c_i, city, yandex = weather_values()
+        w_i, c_i, city, yandex = weather_values(update)
         update_city(c_i)
-        if history:
+        if history or update:
             ui.update_history()
         ui.city.setText(', '.join(c for c in city if c))
         ui.temp.setText(f'{w_i.temp}°')
@@ -83,10 +83,17 @@ class Current(QThread):
         ui.humidity.setText(f'влажность: {w_i.humidity}%')
         ui.pressure.setText(f'давление: {w_i.pressure} мм рт. ст.')
         ui.yandex.setText(f'ситуация на дорогах по версии Яндекс: {yandex_info(yandex)}')
-        today, tomorrow, str_tomorrow = history_data()
-        ui.today.setText(f'сегодня: от {today[0]}° до {today[1]}°, {", ".join(WeatherType(w)._name for w in today[2:])}')
-        ui.tomorrow.setText(f'завтра: {str_tomorrow}, от {tomorrow[0]}° до {tomorrow[1]}°, {", ".join(WeatherType(w)._name for w in tomorrow[2:])}')
-        
+        try:
+            today, tomorrow, str_tomorrow = history_data()
+            ui.today.setText(f'сегодня: от {today[0]}° до {today[1]}°, {WeatherType(today[2])._name}')
+            ui.tomorrow.setText(f'завтра: {str_tomorrow}, от {tomorrow[0]}° до {tomorrow[1]}°, {WeatherType(tomorrow[2])._name}')
+        except:
+            pass
+    
+    def new_values(self):
+        self.timer.stop()
+        self.set_values(True, True)
+        self.timer.start(60000)
 
 
 class History(QThread):
@@ -103,7 +110,7 @@ class History(QThread):
     
     def history(self):
         try:
-            with sqlite3.connect(DATABASE) as conn:
+            with conn:
                 cur = conn.cursor()
                 cur.execute('SELECT lat, lon, timezone FROM info;')
                 lat, lon, timezone = cur.fetchone()

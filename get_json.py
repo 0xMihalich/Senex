@@ -1,11 +1,7 @@
-from requests import Session
+from json import load
+
+from url import url
 
 
 def get_json(link: str) -> dict:
-    with Session() as session:
-        with session.get(link) as resp:
-            try:
-                result = resp.json()
-            except Exception:
-                raise
-    return result
+    return load(url(link))

@@ -1,13 +1,6 @@
-APPID = 'ВАШ_API'
+APPID = 'ВАШ_API_https://openweathermap.org/'
+IPAPI = 'ВАШ_API_https://app.ipgeolocation.io/'
 DATABASE = 'weather.db'
-
-CITY = '''CREATE TABLE IF NOT EXISTS city (
-          id INTEGER,
-          name TEXT,
-          state TEXT,
-          yandex_id INTEGER,
-          UNIQUE(id)
-          );'''
 
 INFO = '''CREATE TABLE IF NOT EXISTS info (
           id INTEGER,

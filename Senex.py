@@ -4,6 +4,8 @@ from PyQt5.QtWidgets import QMainWindow, QWidget, QLabel, QGridLayout, QSystemTr
 
 from watch import Watch
 from current import Current, History
+from lat_lon import lat_lon
+from sqlbase import conn
 
 
 class Weather(QMainWindow):
@@ -15,16 +17,22 @@ class Weather(QMainWindow):
         self.setWindowTitle("Senex")
         self.setAttribute(Qt.WA_TranslucentBackground, True)
         self.setWindowFlags(Qt.SplashScreen | Qt.FramelessWindowHint)
-        self.setStyleSheet("QLabel { color: white }")
+        with conn:
+            cur = conn.cursor()
+            cur.execute('SELECT color FROM font;')
+            (color, ) = cur.fetchone()
+        self.change_color(color)
+        del color
         
         self.centralwidget = QWidget(self)
         self.centralwidget.setObjectName("centralwidget")
         
         self.layoutWidget = QWidget(self.centralwidget)
-        self.layoutWidget.setGeometry(QRect(3, 2, 535, 235))
+        self.layoutWidget.setGeometry(QRect(3, 2, 515, 235))
         self.layoutWidget.setObjectName("layoutWidget")
         
         self.gridLayout = QGridLayout(self.layoutWidget)
+        self.gridLayout.setAlignment(Qt.AlignLeft)
         self.gridLayout.setContentsMargins(0, 0, 0, 0)
         self.gridLayout.setObjectName("gridLayout")
         
@@ -112,11 +120,25 @@ class Weather(QMainWindow):
         self.tray_icon = QSystemTrayIcon(self)
         self.tray_icon.setIcon(QIcon('icons/01d.png'))
         
+        color_action = QMenu("Цвет текста", self)
+        update_action = QAction("Обновить местоположение", self)
         quit_action = QAction("Закрыть Senex", self)
-        quit_action.triggered.connect(qApp.quit)
         
         tray_menu = QMenu()
+        tray_menu.addMenu(color_action)
+        tray_menu.addAction(update_action)
         tray_menu.addAction(quit_action)
+        
+        black_action = QAction("Черный", self)
+        white_action = QAction("Белый", self)
+        red_action = QAction("Красный", self)
+        blue_action = QAction("Синий", self)
+        yellow_action = QAction("Желтый", self)
+        color_action.addAction(black_action)
+        color_action.addAction(white_action)
+        color_action.addAction(red_action)
+        color_action.addAction(blue_action)
+        color_action.addAction(yellow_action)
         
         self.tray_icon.setContextMenu(tray_menu)
         self.tray_icon.show()
@@ -128,6 +150,14 @@ class Weather(QMainWindow):
 
         self.current = Current(mainwindow=self)
         self.current.run()
+        
+        black_action.triggered.connect(lambda: self.change_color('black'))
+        white_action.triggered.connect(lambda: self.change_color('white'))
+        red_action.triggered.connect(lambda: self.change_color('red'))
+        blue_action.triggered.connect(lambda: self.change_color('blue'))
+        yellow_action.triggered.connect(lambda: self.change_color('yellow'))
+        update_action.triggered.connect(lambda: self.current.new_values())
+        quit_action.triggered.connect(qApp.quit)
 
     def seticon(self, path):
         self.icon.setPixmap(QPixmap(path))
@@ -135,6 +165,13 @@ class Weather(QMainWindow):
 
     def update_history(self):
         self.history.run()
+    
+    def change_color(self, color):
+        self.setStyleSheet("QLabel { color: " + color + " }")
+        with conn:
+            cur = conn.cursor()
+            cur.execute(f'UPDATE font SET color = "{color}";')
+            conn.commit()
 
 
 def move2RightBottomCorner(win):
