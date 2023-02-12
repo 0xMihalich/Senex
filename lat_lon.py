@@ -5,8 +5,8 @@ from sqlbase import conn
 
 def lat_lon(update: bool=False) -> tuple:
     if update:
-        dict_json = get_json(f'https://api.ipgeolocation.io/ipgeo?apiKey={IPAPI}')
-        return dict_json['latitude'], dict_json['longitude']
+        dict_json = get_json(f'https://ipinfo.io/?token={IPAPI}')
+        return (float(loc) for loc in dict_json['loc'].split(','))
     with conn:
         cur = conn.cursor()
         cur.execute('SELECT lat, lon FROM info;')

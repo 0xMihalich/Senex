@@ -1,14 +1,14 @@
 from dt import dt, timestamps
-from unpack import unpack
 from sqlbase import conn
+from unpack import unpack
 
 
-def history_data() -> list:
+def history_data(timezone: int) -> list:
     out = []
     with conn:
         cur = conn.cursor()
         for time in (0, 1):
-            start, stop = timestamps(time)
+            start, stop = timestamps(time, timezone)
             cur.execute(f'SELECT temp FROM weather WHERE dt >= {start} and  dt <= {stop};')
             temp = set(unpack(cur.fetchall()))
             cur.execute(f'SELECT weather FROM weather WHERE dt >= {start} and  dt <= {stop};')

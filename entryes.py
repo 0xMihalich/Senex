@@ -26,7 +26,7 @@ def weather_info(w_info: dict) -> weather:
     dt = w_info['dt']
     temp = round(w_info['main']['temp'])
     feels = round(w_info['main']['feels_like'])
-    pressure = round(w_info['main']['grnd_level'] * 0.75006157584566)
+    pressure = round(w_info['main']['pressure'] * 0.75006157584566)
     humidity = w_info['main']['humidity']
     weather_id = w_info['weather'][0]['id']
     icon = w_info['weather'][0]['icon']

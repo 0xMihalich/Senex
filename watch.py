@@ -16,4 +16,5 @@ class Watch(QThread):
         self.timer.start(1000)
     
     def showTime(self):
-        self.mainwindow.datetime.setText(dt())
+        ui = self.mainwindow
+        ui.datetime.setText(dt(timezone=ui.timezone))

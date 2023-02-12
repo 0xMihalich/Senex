@@ -1,5 +1,5 @@
-APPID = 'ВАШ_API_https://openweathermap.org/'
-IPAPI = 'ВАШ_API_https://app.ipgeolocation.io/'
+APPID = '34556ca79c838ee4c06f6e3050d01e1b'
+IPAPI = '74466aff7335cc'
 DATABASE = 'weather.db'
 
 INFO = '''CREATE TABLE IF NOT EXISTS info (
