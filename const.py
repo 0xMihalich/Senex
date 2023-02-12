@@ -1,5 +1,5 @@
-APPID = '34556ca79c838ee4c06f6e3050d01e1b'
-IPAPI = '74466aff7335cc'
+APPID = 'ВАШ_ТОКЕН_openweathermap'
+IPAPI = 'ВАШ_ТОКЕН_ipinfo'
 DATABASE = 'weather.db'
 
 INFO = '''CREATE TABLE IF NOT EXISTS info (
